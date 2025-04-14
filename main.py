@@ -3,6 +3,7 @@ from datetime import datetime
 
 from fastapi import FastAPI
 from models import Customer, CustomerCreate, Transaction, Invoice
+from db import SessionDep
 
 
 myapp = FastAPI()
@@ -39,7 +40,7 @@ async def time(variable_iso_code: str):
     return {"Time": datetime.now(tz)}
 
 @myapp.post("/customer", response_model=Customer)   #response_model es para que devuelva el modelo de Customer
-async def create_customer(customer_data: CustomerCreate):   #Este modelo es el que se usa para crear un cliente
+async def create_customer(customer_data: CustomerCreate, session: SessionDep):   #Este modelo es el que se usa para crear un cliente
     customer = Customer.model_validate(customer_data.model_dump())  #model_validate es para validar el modelo que ingresan, y debemos pasar un diccionario
     customer.id = len(db_customers)
     db_customers.append(customer)

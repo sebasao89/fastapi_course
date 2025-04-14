@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from sqlmodel import SQLModel
 
 # CUSTOMER    
 class CustomerBase(BaseModel):
@@ -7,7 +8,7 @@ class CustomerBase(BaseModel):
     email: EmailStr
     age: int
 
-class Customer(CustomerBase):
+class Customer(CustomerBase, SQLModel, table=True):
     id: int | None = None  # Optional field with default value of None
 
 class CustomerCreate(CustomerBase):
