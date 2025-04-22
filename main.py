@@ -1,7 +1,7 @@
 import zoneinfo
 from datetime import datetime
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from models import Customer, CustomerCreate, Transaction, Invoice
 from db import SessionDep, create_all_tables
 from sqlmodel import select
@@ -51,6 +51,13 @@ async def create_customer(customer_data: CustomerCreate, session: SessionDep):  
     #return customer_data           #customer_data es el que se pasa como parámetro, y 
     return customer     #customer es el que se devuelve como respuesta
 
+@myapp.get("/customer/{customer_id}", response_model=Customer)  #response_model es para que devuelva un Customer
+async def read_customer(customer_id: int, session: SessionDep):
+    customer_db = session.get(Customer, customer_id)  #session.get(Customer, customer_id) es para obtener el cliente de la base de datos
+    if not customer_db:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail="Customer not found")  #HTTPException es para lanzar una excepción si no se encuentra el cliente
+    return customer_db
+
 @myapp.get("/customers", response_model=list[Customer])  #response_model es para que devuelva una lista de Customer
 async def get_customers(session: SessionDep):
     return session.exec(select(Customer)).all()  #session.exec(select(Customer)).all() es para obtener todos los clientes de la base de datos
@@ -62,6 +69,15 @@ async def get_customer(customer_id: int):
         if customer.id == customer_id:
             return customer
     return {"message": "Customer not found"}
+
+@myapp.delete("/customer/{customer_id}")  
+async def delete_customer(customer_id: int, session: SessionDep):
+    customer_db = session.get(Customer, customer_id)  #session.get(Customer, customer_id) es para obtener el cliente de la base de datos
+    if not customer_db:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail="Customer not found")  #HTTPException es para lanzar una excepción si no se encuentra el cliente
+    session.delete(customer_db)
+    session.commit()
+    return {"detail": "Customer deleted"}
 
 @myapp.post("/transaction")
 async def create_transaction(transaction_data: Transaction):
