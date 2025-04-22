@@ -1,15 +1,16 @@
 from pydantic import BaseModel, EmailStr
-from sqlmodel import SQLModel
+#Field conecta un campo de un modelo a una columna de una tabla en la base de datos
+from sqlmodel import SQLModel, Field
 
 # CUSTOMER    
-class CustomerBase(BaseModel):
-    name: str
-    description: str | None
-    email: EmailStr
-    age: int
+class CustomerBase(SQLModel):
+    name: str = Field(default=None)
+    description: str | None = Field(default=None)  # Optional field with default value of None
+    email: EmailStr = Field(default=None)  # EmailStr is a Pydantic type for email validation
+    age: int = Field(default=None) 
 
-class Customer(CustomerBase, SQLModel, table=True):
-    id: int | None = None  # Optional field with default value of None
+class Customer(CustomerBase, table=True):
+    id: int | None = Field(default=None, primary_key=True)  # Optional field with default value of None
 
 class CustomerCreate(CustomerBase):
     pass

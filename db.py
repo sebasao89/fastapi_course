@@ -4,9 +4,9 @@
 # de dependencias y validación de parámetros.
 from typing import Annotated
 
-from fastapi import Depends                         # Importa la clase Depends de FastAPI para manejar dependencias
+from fastapi import Depends, FastAPI                         # Importa la clase Depends de FastAPI para manejar dependencias
 
-from sqlmodel import Session, create_engine         # Crea una sesión para conectar a la base de datos
+from sqlmodel import SQLModel, Session, create_engine         # Crea una sesión para conectar a la base de datos
 
 
 # MOTOR DE BASE DE DATOS SQLITE
@@ -15,6 +15,12 @@ sqlite_name = "db.sqlite3"                          # Nombre de la base de datos
 sqlite_url = f"sqlite:///{sqlite_name}"             # URL de conexión a la base de datos SQLite
 
 engine = create_engine(sqlite_url)                  # Crea un motor de base de datos SQLite
+
+
+# CREA LA BD Y LAS TABLAS SI NO EXISTEN
+def create_all_tables(app: FastAPI):
+    SQLModel.metadata.create_all(engine)           # Crea todas las tablas definidas en los modelos SQLModel
+    yield                                          # La función yield se utiliza para crear un generador, que permite pausar la ejecución y devolver un valor temporalmente
 
 # OBTENER UNA SESIÓN DE BASE DE DATOS
 def get_session():
