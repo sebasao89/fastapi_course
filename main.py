@@ -2,7 +2,7 @@ import zoneinfo
 from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, status
-from models import Customer, CustomerCreate, Transaction, Invoice
+from models import Customer, CustomerCreate, CustomerUpdate, Transaction, Invoice
 from db import SessionDep, create_all_tables
 from sqlmodel import select
 
@@ -40,22 +40,36 @@ async def time(variable_iso_code: str):
     tz = zoneinfo.ZoneInfo(timezone_str)
     return {"Time": datetime.now(tz)}
 
-@myapp.post("/customer", response_model=Customer)   #response_model es para que devuelva el modelo de Customer
+
+
+@myapp.post("/customer", response_model=Customer)                                #response_model es para que devuelva el modelo de Customer
 async def create_customer(customer_data: CustomerCreate, session: SessionDep):   #Este modelo es el que se usa para crear un cliente
-    customer = Customer.model_validate(customer_data.model_dump())  #model_validate es para validar el modelo que ingresan, y debemos pasar un diccionario
-    session.add(customer)  #session es la sesión de la base de datos, y add es para agregar el cliente a la base de datos
-    session.commit()  #session.commit() es para guardar los cambios en la base de datos
-    session.refresh(customer)  #session.refresh(customer) es para refrescar el cliente y obtener el id que se le asignó en la base de datos
+    customer = Customer.model_validate(customer_data.model_dump())               #model_validate es para validar el modelo que ingresan, y debemos pasar un diccionario
+    session.add(customer)                                                        #session es la sesión de la base de datos, y add es para agregar el cliente a la base de datos
+    session.commit()                                                             #session.commit() es para guardar los cambios en la base de datos
+    session.refresh(customer)                                                    #session.refresh(customer) es para refrescar el cliente y obtener el id que se le asignó en la base de datos
     #customer.id = len(db_customers)
     #db_customers.append(customer)
     #return customer_data           #customer_data es el que se pasa como parámetro, y 
-    return customer     #customer es el que se devuelve como respuesta
+    return customer                                                              #customer es el que se devuelve como respuesta
 
-@myapp.get("/customer/{customer_id}", response_model=Customer)  #response_model es para que devuelva un Customer
+@myapp.get("/customer/{customer_id}", response_model=Customer)                      #response_model es para que devuelva un Customer
 async def read_customer(customer_id: int, session: SessionDep):
-    customer_db = session.get(Customer, customer_id)  #session.get(Customer, customer_id) es para obtener el cliente de la base de datos
+    customer_db = session.get(Customer, customer_id)                                #session.get(Customer, customer_id) es para obtener el cliente de la base de datos
     if not customer_db:
-        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail="Customer not found")  #HTTPException es para lanzar una excepción si no se encuentra el cliente
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail="Customer not found")   #HTTPException es para lanzar una excepción si no se encuentra el cliente
+    return customer_db
+
+@myapp.patch("/customer/{customer_id}", response_model=Customer, status_code=status.HTTP_201_CREATED)  #response_model es para que devuelva un Customer              
+async def read_customer(customer_id: int, customer_data: CustomerUpdate ,session: SessionDep):
+    customer_db = session.get(Customer, customer_id)                                
+    if not customer_db:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail="Customer not found")   
+    customer_data_dict = customer_data.model_dump(exclude_unset=True)
+    customer_db.sqlmodel_update(customer_data_dict)  #sqlmodel_update es para actualizar el cliente en la base de datos
+    session.add(customer_db)  #session.add(customer_db) es para agregar el cliente a la base de datos
+    session.commit()
+    session.refresh(customer_db)
     return customer_db
 
 @myapp.get("/customers", response_model=list[Customer])  #response_model es para que devuelva una lista de Customer
@@ -79,9 +93,13 @@ async def delete_customer(customer_id: int, session: SessionDep):
     session.commit()
     return {"detail": "Customer deleted"}
 
+
+
 @myapp.post("/transaction")
 async def create_transaction(transaction_data: Transaction):
     return transaction_data
+
+
 
 @myapp.post("/invoice")
 async def create_invoice(invoice_data: Invoice):
