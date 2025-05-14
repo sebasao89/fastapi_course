@@ -42,7 +42,7 @@ async def time(variable_iso_code: str):
 
 
 
-@myapp.post("/customer", response_model=Customer)                                #response_model es para que devuelva el modelo de Customer
+@myapp.post("/customer", response_model=Customer, status_code=status.HTTP_201_CREATED)             #response_model es para que devuelva el modelo de Customer
 async def create_customer(customer_data: CustomerCreate, session: SessionDep):   #Este modelo es el que se usa para crear un cliente
     customer = Customer.model_validate(customer_data.model_dump())               #model_validate es para validar el modelo que ingresan, y debemos pasar un diccionario
     session.add(customer)                                                        #session es la sesión de la base de datos, y add es para agregar el cliente a la base de datos
@@ -53,15 +53,15 @@ async def create_customer(customer_data: CustomerCreate, session: SessionDep):  
     #return customer_data           #customer_data es el que se pasa como parámetro, y 
     return customer                                                              #customer es el que se devuelve como respuesta
 
-@myapp.get("/customer/{customer_id}", response_model=Customer)                      #response_model es para que devuelva un Customer
+@myapp.get("/customer/{customer_id}", response_model=Customer)                   #response_model es para que devuelva un Customer
 async def read_customer(customer_id: int, session: SessionDep):
-    customer_db = session.get(Customer, customer_id)                                #session.get(Customer, customer_id) es para obtener el cliente de la base de datos
+    customer_db = session.get(Customer, customer_id)                             #session.get(Customer, customer_id) es para obtener el cliente de la base de datos, los parametros son el modelo y el id con el que se busca
     if not customer_db:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail="Customer not found")   #HTTPException es para lanzar una excepción si no se encuentra el cliente
     return customer_db
 
-@myapp.patch("/customer/{customer_id}", response_model=Customer, status_code=status.HTTP_201_CREATED)  #response_model es para que devuelva un Customer              
-async def read_customer(customer_id: int, customer_data: CustomerUpdate ,session: SessionDep):
+@myapp.patch("/customer/{customer_id}", response_model=Customer, status_code=status.HTTP_200_OK)  #response_model es para que devuelva un Customer              
+async def update_customer(customer_id: int, customer_data: CustomerUpdate ,session: SessionDep):
     customer_db = session.get(Customer, customer_id)                                
     if not customer_db:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail="Customer not found")   
