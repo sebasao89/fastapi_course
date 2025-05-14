@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+# SQLModel es una biblioteca que combina SQLAlchemy y Pydantic para facilitar la creación de modelos de datos y la interacción con bases de datos en aplicaciones FastAPI.
 #Field conecta un campo de un modelo a una columna de una tabla en la base de datos
 from sqlmodel import SQLModel, Field
 

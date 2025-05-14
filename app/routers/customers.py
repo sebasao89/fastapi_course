@@ -1,48 +1,15 @@
-import zoneinfo
-from datetime import datetime
-
-from fastapi import FastAPI, HTTPException, status
-from models import Customer, CustomerCreate, CustomerUpdate, Transaction, Invoice
-from db import SessionDep, create_all_tables
+from fastapi import APIRouter,HTTPException, status
 from sqlmodel import select
 
+from models import Customer, CustomerCreate, CustomerUpdate
+from db import SessionDep
 
-myapp = FastAPI(lifespan = create_all_tables)  # Crea una instancia de FastAPI y registra la función create_all_tables como un evento de inicio y cierre de la aplicación
-
-country_timezones = {
-    "CO": "America/Bogota",
-    "MX": "America/Mexico_City",
-    "AR": "America/Argentina/Buenos_Aires",
-    "BR": "America/Sao_Paulo",
-    "PE": "America/Lima",
-}
-
-current_id: int = 0
+router = APIRouter()  # Crea un enrutador para manejar las rutas de la aplicación
 
 db_customers: list[Customer] = []
 
 
-# ENDPOINTS
-
-@myapp.get("/")
-def read_root():
-    return {"message": "Hello, FastAPI! by sebasao"}
-
-@myapp.get("/time")
-async def time():
-    return {"Time": datetime.now()}
-
-    # endpoint with a variable
-@myapp.get("/time2/{variable_iso_code}")
-async def time(variable_iso_code: str):
-    iso = variable_iso_code.upper()
-    timezone_str = country_timezones.get(iso)
-    tz = zoneinfo.ZoneInfo(timezone_str)
-    return {"Time": datetime.now(tz)}
-
-
-
-@myapp.post("/customer", response_model=Customer, status_code=status.HTTP_201_CREATED)             #response_model es para que devuelva el modelo de Customer
+@router.post("/customer", response_model=Customer, status_code=status.HTTP_201_CREATED, tags=["customers"])             #response_model es para que devuelva el modelo de Customer
 async def create_customer(customer_data: CustomerCreate, session: SessionDep):   #Este modelo es el que se usa para crear un cliente
     customer = Customer.model_validate(customer_data.model_dump())               #model_validate es para validar el modelo que ingresan, y debemos pasar un diccionario
     session.add(customer)                                                        #session es la sesión de la base de datos, y add es para agregar el cliente a la base de datos
@@ -51,16 +18,18 @@ async def create_customer(customer_data: CustomerCreate, session: SessionDep):  
     #customer.id = len(db_customers)
     #db_customers.append(customer)
     #return customer_data           #customer_data es el que se pasa como parámetro, y 
-    return customer                                                              #customer es el que se devuelve como respuesta
+    return customer 
+                                                             #customer es el que se devuelve como respuesta
 
-@myapp.get("/customer/{customer_id}", response_model=Customer)                   #response_model es para que devuelva un Customer
+@router.get("/customer/{customer_id}", response_model=Customer, tags=["customers"])                   #response_model es para que devuelva un Customer
 async def read_customer(customer_id: int, session: SessionDep):
     customer_db = session.get(Customer, customer_id)                             #session.get(Customer, customer_id) es para obtener el cliente de la base de datos, los parametros son el modelo y el id con el que se busca
     if not customer_db:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail="Customer not found")   #HTTPException es para lanzar una excepción si no se encuentra el cliente
     return customer_db
 
-@myapp.patch("/customer/{customer_id}", response_model=Customer, status_code=status.HTTP_200_OK)  #response_model es para que devuelva un Customer              
+
+@router.patch("/customer/{customer_id}", response_model=Customer, status_code=status.HTTP_200_OK, tags=["customers"])  #response_model es para que devuelva un Customer              
 async def update_customer(customer_id: int, customer_data: CustomerUpdate ,session: SessionDep):
     customer_db = session.get(Customer, customer_id)                                
     if not customer_db:
@@ -72,19 +41,22 @@ async def update_customer(customer_id: int, customer_data: CustomerUpdate ,sessi
     session.refresh(customer_db)
     return customer_db
 
-@myapp.get("/customers", response_model=list[Customer])  #response_model es para que devuelva una lista de Customer
+
+@router.get("/customers", response_model=list[Customer], tags=["customers"])  #response_model es para que devuelva una lista de Customer
 async def get_customers(session: SessionDep):
     return session.exec(select(Customer)).all()  #session.exec(select(Customer)).all() es para obtener todos los clientes de la base de datos
     #return db_customers
 
-@myapp.get("/customer/{customer_id}", response_model=Customer)  #response_model es para que devuelva un Customer
+
+@router.get("/customer1/{customer_id}", response_model=Customer, tags=["customers"])  #response_model es para que devuelva un Customer
 async def get_customer(customer_id: int):
     for customer in db_customers:
         if customer.id == customer_id:
             return customer
     return {"message": "Customer not found"}
 
-@myapp.delete("/customer/{customer_id}")  
+
+@router.delete("/customer/{customer_id}", tags=["customers"])
 async def delete_customer(customer_id: int, session: SessionDep):
     customer_db = session.get(Customer, customer_id)  #session.get(Customer, customer_id) es para obtener el cliente de la base de datos
     if not customer_db:
@@ -92,15 +64,3 @@ async def delete_customer(customer_id: int, session: SessionDep):
     session.delete(customer_db)
     session.commit()
     return {"detail": "Customer deleted"}
-
-
-
-@myapp.post("/transaction")
-async def create_transaction(transaction_data: Transaction):
-    return transaction_data
-
-
-
-@myapp.post("/invoice")
-async def create_invoice(invoice_data: Invoice):
-    return invoice_data
