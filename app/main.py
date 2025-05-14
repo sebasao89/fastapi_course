@@ -2,14 +2,15 @@ import zoneinfo
 from datetime import datetime
 
 from fastapi import FastAPI
-from models import Transaction, Invoice
 from db import create_all_tables
-from .routers import customers # Importa el enrutador de clientes
+from .routers import customers, transactions, invoices # Importa el enrutador de clientes, transacciones e invoices
 
 
 
 myapp = FastAPI(lifespan = create_all_tables)  # Crea una instancia de FastAPI y registra la función create_all_tables como un evento de inicio y cierre de la aplicación
 myapp.include_router(customers.router)  # Incluye el enrutador de clientes en la aplicación FastAPI
+myapp.include_router(transactions.router)  # Incluye el enrutador de transacciones en la aplicación FastAPI
+myapp.include_router(invoices.router)  # Incluye el enrutador de invoices en la aplicación FastAPI
 
 country_timezones = {
     "CO": "America/Bogota",
@@ -41,17 +42,3 @@ async def time(variable_iso_code: str):
     return {"Time": datetime.now(tz)}
 
 
-
-
-
-
-
-@myapp.post("/transaction")
-async def create_transaction(transaction_data: Transaction):
-    return transaction_data
-
-
-
-@myapp.post("/invoice")
-async def create_invoice(invoice_data: Invoice):
-    return invoice_data
