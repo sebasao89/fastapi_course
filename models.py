@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr
 # SQLModel es una biblioteca que combina SQLAlchemy y Pydantic para facilitar la creación de modelos de datos y la interacción con bases de datos en aplicaciones FastAPI.
 #Field conecta un campo de un modelo a una columna de una tabla en la base de datos
-from sqlmodel import SQLModel, Field
+from sqlmodel import Relationship, SQLModel, Field
 
 # CUSTOMER    
 class CustomerBase(SQLModel):
@@ -12,6 +12,7 @@ class CustomerBase(SQLModel):
 
 class Customer(CustomerBase, table=True):
     id: int | None = Field(default=None, primary_key=True)  # Optional field with default value of None
+    transactions: list["Transaction"] = Relationship(back_populates="customer")  # Relationship to the Transaction table
 
 class CustomerCreate(CustomerBase):
     pass
@@ -20,11 +21,17 @@ class CustomerUpdate(CustomerBase):
     pass
 
 # TRANSACTION
-class Transaction(BaseModel):
-    id: int
-    amount: int
-    description: str
-    date: str | None = None  # Optional field with default value of None
+class TransactionBase(SQLModel):
+    amount: int = Field(default=None)
+    description: str = Field(default=None)  # Optional field with default value of None
+
+class Transaction(TransactionBase, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    customer_id: int = Field(foreign_key="customer.id")  # Foreign key to the Customer table
+    customer: Customer = Relationship(back_populates="transactions")  # Relationship to the Customer table
+
+class TransactionCreate(TransactionBase):
+    customer_id: int = Field(foreign_key="customer.id")
 
 # INVOICE
 class Invoice(BaseModel):
