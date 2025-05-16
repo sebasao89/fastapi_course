@@ -7,6 +7,7 @@ from typing import Annotated
 from fastapi import Depends, FastAPI                         # Importa la clase Depends de FastAPI para manejar dependencias
 
 from sqlmodel import SQLModel, Session, create_engine         # Crea una sesión para conectar a la base de datos
+import asyncio
 
 
 # MOTOR DE BASE DE DATOS SQLITE
@@ -18,9 +19,10 @@ engine = create_engine(sqlite_url)                  # Crea un motor de base de d
 
 
 # CREA LA BD Y LAS TABLAS SI NO EXISTEN
-def create_all_tables(app: FastAPI):
-    SQLModel.metadata.create_all(engine)           # Crea todas las tablas definidas en los modelos SQLModel
-    yield                                          # La función yield se utiliza para crear un generador, que permite pausar la ejecución y devolver un valor temporalmente
+async def create_all_tables():
+    """Crea todas las tablas en la base de datos"""
+    # Hacemos async la creación de tablas
+    await asyncio.to_thread(SQLModel.metadata.create_all, engine)
 
 # OBTENER UNA SESIÓN DE BASE DE DATOS
 def get_session():
@@ -32,4 +34,4 @@ def get_session():
 SessionDep = Annotated[
     Session,                                        # Tipo de la dependencia
     Depends(get_session),                           # Dependencia que se inyectará
-]  # SessionDep es una anotación que indica que se espera una sesión de base de datos como dependencia  
+]  # SessionDep es una anotación que indica que se espera una sesión de base de datos como dependencia
