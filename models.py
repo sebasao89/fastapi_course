@@ -3,6 +3,20 @@ from pydantic import BaseModel, EmailStr
 #Field conecta un campo de un modelo a una columna de una tabla en la base de datos
 from sqlmodel import Relationship, SQLModel, Field
 
+
+# PLAN
+class CustomerPlan(SQLModel, table=True):
+    plan_id: int = Field(foreign_key="plan.id", primary_key=True)  # Foreign key to the Plan table
+    customer_id: int = Field(foreign_key="customer.id", primary_key=True)  # Foreign key to the Customer table
+    plan_id: int = Field(foreign_key="plan.id")  # Foreign key to the Plan table
+
+class Plan(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)  # Optional field with default value of None
+    name: str = Field(default=None)
+    price: int = Field(default=None)
+    description: str | None = Field(default=None)  # Optional field with default value of None
+    customers: list["Customer"] = Relationship(back_populates="plans", link_model=CustomerPlan)  # Relationship to the Customer table
+
 # CUSTOMER    
 class CustomerBase(SQLModel):
     name: str = Field(default=None)
@@ -13,6 +27,7 @@ class CustomerBase(SQLModel):
 class Customer(CustomerBase, table=True):
     id: int | None = Field(default=None, primary_key=True)  # Optional field with default value of None
     transactions: list["Transaction"] = Relationship(back_populates="customer")  # Relationship to the Transaction table
+    plans: list["Plan"] = Relationship(back_populates="customers", link_model=CustomerPlan)  # Relationship to the Plan table
 
 class CustomerCreate(CustomerBase):
     pass
