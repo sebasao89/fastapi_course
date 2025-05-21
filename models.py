@@ -4,18 +4,21 @@ from pydantic import BaseModel, EmailStr
 from sqlmodel import Relationship, SQLModel, Field
 
 
-# PLAN
+# RELATIONSHIP
 class CustomerPlan(SQLModel, table=True):
     plan_id: int = Field(foreign_key="plan.id", primary_key=True)  # Foreign key to the Plan table
     customer_id: int = Field(foreign_key="customer.id", primary_key=True)  # Foreign key to the Customer table
     plan_id: int = Field(foreign_key="plan.id")  # Foreign key to the Plan table
 
+
+# PLAN
 class Plan(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)  # Optional field with default value of None
     name: str = Field(default=None)
     price: int = Field(default=None)
     description: str | None = Field(default=None)  # Optional field with default value of None
     customers: list["Customer"] = Relationship(back_populates="plans", link_model=CustomerPlan)  # Relationship to the Customer table
+
 
 # CUSTOMER    
 class CustomerBase(SQLModel):
@@ -35,6 +38,7 @@ class CustomerCreate(CustomerBase):
 class CustomerUpdate(CustomerBase):
     pass
 
+
 # TRANSACTION
 class TransactionBase(SQLModel):
     amount: int = Field(default=None)
@@ -47,6 +51,7 @@ class Transaction(TransactionBase, table=True):
 
 class TransactionCreate(TransactionBase):
     customer_id: int = Field(foreign_key="customer.id")
+
 
 # INVOICE
 class Invoice(BaseModel):

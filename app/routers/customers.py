@@ -1,7 +1,7 @@
 from fastapi import APIRouter,HTTPException, status
 from sqlmodel import select
 
-from models import Customer, CustomerCreate, CustomerUpdate
+from models import Customer, CustomerCreate, CustomerPlan, CustomerUpdate, Plan
 from db import SessionDep
 
 router = APIRouter()  # Crea un enrutador para manejar las rutas de la aplicación
@@ -64,3 +64,25 @@ async def delete_customer(customer_id: int, session: SessionDep):
     session.delete(customer_db)
     session.commit()
     return {"detail": "Customer deleted"}
+
+
+@router.post("/customer/{customer_id}/plans/{plan_id}", tags=["customers"])
+async def subscribe_customer_to_plan(customer_id: int, plan_id: int, session: SessionDep):
+    customer_db = session.get(Customer, customer_id)  #session.get(Customer, customer_id) es para obtener el cliente de la base de datos
+    plan_db = session.get(Plan, plan_id)  #session.get(Plan, plan_id) es para obtener el plan de la base de datos
+
+    if not customer_db or not plan_db or customer_db.id is None or plan_db.id is None:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail="Customer or Plan not found")
+    
+    customer_plan_db = CustomerPlan(customer_id = customer_db.id, plan_id = plan_db.id)  #CustomerPlan es el modelo que relaciona el cliente con el plan  
+    session.add(customer_plan_db)
+    session.commit()    
+    session.refresh(customer_plan_db)
+    return customer_plan_db
+
+@router.get("/customer/{customer_id}/plans", response_model=list[Plan], tags=["customers"])
+async def list_customer_to_plan(customer_id: int, session: SessionDep):
+    customer_db = session.get(Customer, customer_id)
+    if not customer_db:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail="Customer not found")
+    return customer_db.plans

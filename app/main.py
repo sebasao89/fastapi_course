@@ -5,7 +5,7 @@ from typing import AsyncGenerator
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 from db import create_all_tables
-from .routers import customers, transactions, invoices # Importa el enrutador de clientes, transacciones e invoices
+from .routers import customers, transactions, invoices, plans # Importa el enrutador de clientes, transacciones e invoices
 
 
 @asynccontextmanager
@@ -22,6 +22,7 @@ myapp = FastAPI(lifespan=lifespan)  # Crea una instancia de FastAPI y registra l
 myapp.include_router(customers.router)  # Incluye el enrutador de clientes en la aplicación FastAPI
 myapp.include_router(transactions.router)  # Incluye el enrutador de transacciones en la aplicación FastAPI
 myapp.include_router(invoices.router)  # Incluye el enrutador de invoices en la aplicación FastAPI
+myapp.include_router(plans.router)  # Incluye el enrutador de invoices en la aplicación FastAPI
 
 country_timezones = {
     "CO": "America/Bogota",
